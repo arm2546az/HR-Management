@@ -97,7 +97,7 @@ const MainLayout: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out min-w-0 overflow-x-hidden ${
         isSidebarOpen ? 'lg:pl-72' : 'lg:pl-0'
       }`}>
         {/* Top Navbar */}
@@ -109,14 +109,14 @@ const MainLayout: React.FC = () => {
         />
 
         {/* Breadcrumb Header without redundant duplicate text */}
-        <div className="px-4 sm:px-6 py-3 bg-white border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span className="font-bold text-[#022247]">VN Group HRMS</span>
-            <i className="fa-solid fa-chevron-right text-[10px] text-slate-300"></i>
-            <span className="text-[#064a8b] font-bold">{tabTitles[activeTab] || activeTab}</span>
+        <div className="px-3 sm:px-6 py-2.5 sm:py-3 bg-white border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-slate-500 min-w-0">
+            <span className="font-bold text-[#022247] shrink-0">VN Group HRMS</span>
+            <i className="fa-solid fa-chevron-right text-[10px] text-slate-300 shrink-0"></i>
+            <span className="text-[#064a8b] font-bold truncate">{tabTitles[activeTab] || activeTab}</span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs shrink-0">
             <span className="text-slate-400">สาขาที่แสดง:</span>
             <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200">
               📍 {branchName}
@@ -124,8 +124,8 @@ const MainLayout: React.FC = () => {
           </div>
         </div>
 
-        {/* Page Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto">
+        {/* Page Main Content Area (Clean Mobile Fit) */}
+        <main className="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto min-w-0 overflow-x-hidden">
           {/* Workspaces & Modules */}
           {activeTab === 'dashboard' && <AdminDashboard onNavigate={setActiveTab} />}
           {activeTab === 'requests' && <RequestsPage />}

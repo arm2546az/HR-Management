@@ -6,7 +6,6 @@ export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [branchId, setBranchId] = useState<'c2' | 'c1'>('c2'); // c2 = ท่ามะเขือ, c1 = เมืองกำแพงเพชร
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -20,21 +19,13 @@ export const LoginPage: React.FC = () => {
     }
 
     setIsLoading(true);
-    const success = login(username, password, branchId);
+    const success = login(username, password);
     setIsLoading(false);
 
     if (!success) {
       setErrorMsg('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง');
     }
   };
-
-  const isBranchRole =
-    username.includes('หัวหน้าแผนก') ||
-    username.includes('พนักงาน') ||
-    username.toLowerCase().includes('depthead') ||
-    username.toLowerCase().includes('employee') ||
-    username.toLowerCase().includes('staff') ||
-    username === '';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-200 flex flex-col justify-center items-center p-4">
@@ -85,46 +76,6 @@ export const LoginPage: React.FC = () => {
                 />
               </div>
             </div>
-
-            {/* Branch Selector for Department Head & Employee */}
-            {isBranchRole && (
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 animate-fade-in">
-                <div className="flex items-center justify-between">
-                  <label className="block font-bold text-slate-700 text-[11px]">
-                    สาขาประจำ (Branch) <span className="text-slate-400 font-normal">(สำหรับหัวหน้าแผนก / พนักงาน)</span>
-                  </label>
-                  <span className="text-[10px] text-[#064a8b] font-bold">
-                    {branchId === 'c2' ? 'สาขาท่ามะเขือ' : 'สาขาเมืองกำแพงเพชร'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setBranchId('c2')}
-                    className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      branchId === 'c2'
-                        ? 'bg-[#064a8b] text-white border-[#064a8b] shadow-xs'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <i className="fa-solid fa-location-dot text-xs"></i>
-                    <span>สาขาท่ามะเขือ</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBranchId('c1')}
-                    className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      branchId === 'c1'
-                        ? 'bg-[#064a8b] text-white border-[#064a8b] shadow-xs'
-                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <i className="fa-solid fa-location-dot text-xs"></i>
-                    <span>สาขาเมืองกำแพงเพชร</span>
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div>
               <label className="block font-bold text-slate-700 mb-1.5">
