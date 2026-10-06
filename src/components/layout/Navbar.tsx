@@ -13,7 +13,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleSidebar,
   onNavigate,
 }) => {
-  const { currentUser, currentEmployee, role, switchRole, logout } = useAuth();
+  const { currentUser, currentEmployee, role, logout } = useAuth();
   const {
     companies,
     selectedCompanyId,
@@ -26,7 +26,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
@@ -65,65 +64,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs">
-      {/* Quick Demo Switcher Strip */}
-      <div className="bg-[#022247] text-white px-4 py-1.5 text-xs flex flex-wrap items-center justify-between gap-2 border-b border-[#064a8b]/30">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#c3a138] text-slate-900">
-            <i className="fa-solid fa-bolt mr-1"></i> สลับสิทธิ์ทดสอบ:
-          </span>
-          <span className="text-slate-300 hidden sm:inline text-[11px]">
-            4 บทบาทตามระบบ
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <button
-            onClick={() => switchRole('SUPER_ADMIN')}
-            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
-              role === 'SUPER_ADMIN'
-                ? 'bg-purple-500 text-white font-bold shadow-xs ring-1 ring-white/50'
-                : 'bg-white/10 text-slate-200 hover:bg-white/20'
-            }`}
-            title="สิทธิ์ Super Admin (ผู้บริหารสูงสุด)"
-          >
-            <i className="fa-solid fa-crown text-[10px]"></i> 1. Super Admin
-          </button>
-          <button
-            onClick={() => switchRole('HR_MANAGER')}
-            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
-              role === 'HR_MANAGER'
-                ? 'bg-blue-500 text-white font-bold shadow-xs ring-1 ring-white/50'
-                : 'bg-white/10 text-slate-200 hover:bg-white/20'
-            }`}
-            title="สิทธิ์ HR Manager (ฝ่ายทรัพยากรบุคคล)"
-          >
-            <i className="fa-solid fa-user-tie text-[10px]"></i> 2. HR manager
-          </button>
-          <button
-            onClick={() => switchRole('DEPARTMENT_HEAD')}
-            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
-              role === 'DEPARTMENT_HEAD'
-                ? 'bg-amber-500 text-white font-bold shadow-xs ring-1 ring-white/50'
-                : 'bg-white/10 text-slate-200 hover:bg-white/20'
-            }`}
-            title="สิทธิ์ หัวหน้าแผนก (สายอนุมัติทีม)"
-          >
-            <i className="fa-solid fa-user-check text-[10px]"></i> 3. หัวหน้าแผนก
-          </button>
-          <button
-            onClick={() => switchRole('EMPLOYEE')}
-            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
-              role === 'EMPLOYEE'
-                ? 'bg-emerald-500 text-white font-bold shadow-xs ring-1 ring-white/50'
-                : 'bg-white/10 text-slate-200 hover:bg-white/20'
-            }`}
-            title="สิทธิ์ พนักงาน (ผู้ใช้งานทั่วไป)"
-          >
-            <i className="fa-solid fa-user text-[10px]"></i> 4. พนักงาน
-          </button>
-        </div>
-      </div>
-
       {/* Main Navbar */}
       <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
         {/* Left: Hamburger & Brand */}

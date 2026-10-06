@@ -30,13 +30,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onSelectTab,
 }) => {
-  const { role, currentUser, currentEmployee, switchRole, logout } = useAuth();
+  const { role, currentUser, currentEmployee, logout } = useAuth();
   const { requests, selectedCompanyId, setSelectedCompanyId, companies } = useHR();
 
   // Branch selector dropdown toggle in sidebar
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
-  // Role switcher dropdown toggle in sidebar
-  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
 
   // Pending counts
   const pendingRequestsCount = requests.filter(r => r.status === 'PENDING').length;
@@ -376,7 +374,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* =========================================
-            2. USER PROFILE & ROLE SWITCHER
+            2. USER PROFILE
            ========================================= */}
         <div className="px-3 pt-3">
           <div className="p-3 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xs relative group">
@@ -398,48 +396,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
-
-            {/* Quick Role Switcher Button */}
-            <div className="mt-2.5 pt-2 border-t border-white/10">
-              <button
-                onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
-                className="w-full text-left flex items-center justify-between text-[11px] text-slate-300 hover:text-white transition-colors"
-              >
-                <span className="flex items-center gap-1.5 font-medium">
-                  <i className="fa-solid fa-shuffle text-[#c3a138] text-[10px]"></i>
-                  <span>สลับสิทธิ์ใช้งาน</span>
-                </span>
-                <i className={`fa-solid fa-chevron-down text-[9px] transition-transform ${showRoleSwitcher ? 'rotate-180' : ''}`}></i>
-              </button>
-
-              {/* Role Switcher Menu Buttons */}
-              {showRoleSwitcher && (
-                <div className="grid grid-cols-2 gap-1.5 mt-2 pt-1 border-t border-white/5">
-                  {(['SUPER_ADMIN', 'HR_MANAGER', 'DEPARTMENT_HEAD', 'EMPLOYEE'] as Role[]).map(r => {
-                    const isCurrent = role === r;
-                    const rLabel = r === 'SUPER_ADMIN' ? 'Super Admin' :
-                                   r === 'HR_MANAGER' ? 'HR Manager' :
-                                   r === 'DEPARTMENT_HEAD' ? 'หัวหน้าแผนก' : 'พนักงาน';
-                    return (
-                      <button
-                        key={r}
-                        onClick={() => {
-                          switchRole(r);
-                          setShowRoleSwitcher(false);
-                        }}
-                        className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all text-center truncate ${
-                          isCurrent
-                            ? 'bg-[#c3a138] text-slate-950 shadow-xs'
-                            : 'bg-white/10 text-slate-200 hover:bg-white/20'
-                        }`}
-                      >
-                        {rLabel}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
         </div>

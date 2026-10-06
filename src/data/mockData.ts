@@ -78,48 +78,48 @@ const createDefaultLeaveQuotas = (): Record<LeaveType, any> => ({
 // No mock employees - User adds employees manually
 export const INITIAL_EMPLOYEES: Employee[] = [];
 
-// Initial Users for the 4 core roles to sign in and test
+// Initial Users for the 4 core roles to sign in
 export const INITIAL_USERS: User[] = [
   {
     id: 'u1',
     employeeId: '',
     username: 'superadmin',
-    password: 'password123',
+    password: '01092569',
     role: 'SUPER_ADMIN',
     isActive: true,
     assignedCompanyIds: ['c1', 'c2'],
-    lastLogin: '2026-10-05 08:30:12',
+    lastLogin: '2026-10-06 08:30:12',
   },
   {
     id: 'u2',
     employeeId: '',
     username: 'hrmanager',
-    password: 'password123',
+    password: '02092569',
     role: 'HR_MANAGER',
     isActive: true,
     assignedCompanyIds: ['c1', 'c2'],
-    lastLogin: '2026-10-05 08:45:00',
+    lastLogin: '2026-10-06 08:45:00',
   },
   {
     id: 'u3',
     employeeId: '',
     username: 'depthead',
-    password: 'password123',
+    password: '25691313',
     role: 'DEPARTMENT_HEAD',
     isActive: true,
     assignedCompanyIds: ['c1'],
     allowedDepartments: ['d2'],
-    lastLogin: '2026-10-05 08:15:22',
+    lastLogin: '2026-10-06 08:15:22',
   },
   {
     id: 'u4',
     employeeId: '',
     username: 'employee',
-    password: 'password123',
+    password: '1313131313',
     role: 'EMPLOYEE',
     isActive: true,
     assignedCompanyIds: ['c1'],
-    lastLogin: '2026-10-05 07:55:10',
+    lastLogin: '2026-10-06 07:55:10',
   },
 ];
 

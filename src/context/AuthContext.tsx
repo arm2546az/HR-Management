@@ -19,7 +19,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_USER_KEY = 'vn_hrms_auth_user';
+const AUTH_USER_KEY = 'vn_hrms_auth_user_v2';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -27,15 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // Normalize role if old role name was stored
         if (parsed.role === 'ADMIN_HR') parsed.role = 'HR_MANAGER';
         if (parsed.role === 'APPROVER') parsed.role = 'DEPARTMENT_HEAD';
         return parsed;
       } catch {
-        return INITIAL_USERS[0];
+        return null;
       }
     }
-    return INITIAL_USERS[0]; // Default to Super Admin on start
+    return null; // Require login only
   });
 
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(() => {
@@ -56,15 +55,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [currentUser]);
 
-  const login = (username: string, _password?: string): boolean => {
+  const login = (username: string, password?: string): boolean => {
     const term = username.trim().toLowerCase();
+    const pass = (password || '').trim();
+
     const foundUser = INITIAL_USERS.find(u => {
       const uName = u.username.toLowerCase();
-      if (uName === term) return true;
-      // Also allow aliases
-      if (term === 'adminhr' && u.role === 'HR_MANAGER') return true;
-      if (term === 'approver' && u.role === 'DEPARTMENT_HEAD') return true;
-      return false;
+      const matchUsername =
+        uName === term ||
+        (u.role === 'SUPER_ADMIN' && (term === 'superadmin' || term === 'super admin')) ||
+        (u.role === 'HR_MANAGER' && (term === 'hr manager' || term === 'hrmanager' || term === 'hr')) ||
+        (u.role === 'DEPARTMENT_HEAD' && (term === 'หัวหน้าแผนก' || term === 'depthead' || term === 'dept head')) ||
+        (u.role === 'EMPLOYEE' && (term === 'พนักงาน' || term === 'employee' || term === 'staff'));
+
+      if (!matchUsername) return false;
+      return u.password === pass;
     });
 
     if (foundUser && foundUser.isActive) {
