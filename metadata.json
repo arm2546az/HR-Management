@@ -1,0 +1,6 @@
+{
+  "name": "VN Group HRMS - ระบบบริหารทรัพยากรบุคคล",
+  "description": "ระบบบริหารทรัพยากรบุคคล VN Group โรงเรียนสอนขับรถวีเอ็น (สาขาเมืองกำแพงเพชร และ สาขาท่ามะเขือ) ครบวงจร จัดการพนักงาน เวลาทำงาน วันลา การอนุมัติ เงินเดือน และรายงาน",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

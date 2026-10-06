@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+:root {
+  --color-vn-navy: #022247;
+  --color-vn-blue: #064a8b;
+  --color-vn-muted: #a4b3d3;
+  --color-vn-gold: #c3a138;
+}
+
+body {
+  font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #1e293b;
+  background-color: #f8fafc;
+}
+
+/* Print Styles for Payslip */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .payslip-container {
+    border: 1px solid #94a3b8 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}
