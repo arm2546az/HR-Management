@@ -3,7 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useHR } from '../../context/HRContext';
 import { DataTable, Column } from '../common/DataTable';
 import { Modal } from '../common/Modal';
-import { AttendanceRecord, Holiday } from '../../types';
+import { AttendanceRecord } from '../../types';
 import { formatThaiDate, getStatusBadge, Alert } from '../../utils/helpers';
 
 export const AttendanceLeavePage: React.FC = () => {
@@ -11,8 +11,6 @@ export const AttendanceLeavePage: React.FC = () => {
   const {
     attendance,
     holidays,
-    addHoliday,
-    deleteHoliday,
     clockIn,
     clockOut,
     requestAttendanceCorrection,
@@ -21,20 +19,15 @@ export const AttendanceLeavePage: React.FC = () => {
     selectedCompanyId,
   } = useHR();
 
-  // Tabs: 'ATTENDANCE' | 'CALENDAR' | 'HOLIDAYS'
-  const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'CALENDAR' | 'HOLIDAYS'>('ATTENDANCE');
+  // Tabs: 'ATTENDANCE' | 'CALENDAR' (Holidays management tab removed per user request)
+  const [activeTab, setActiveTab] = useState<'ATTENDANCE' | 'CALENDAR'>('ATTENDANCE');
 
-  // Modals
+  // Modals for Attendance Correction
   const [showCorrectionModal, setShowCorrectionModal] = useState(false);
   const [targetAttForCorrection, setTargetAttForCorrection] = useState<AttendanceRecord | null>(null);
   const [correctionReason, setCorrectionReason] = useState('');
   const [newClockIn, setNewClockIn] = useState('08:00:00');
   const [newClockOut, setNewClockOut] = useState('17:00:00');
-
-  const [showHolidayModal, setShowHolidayModal] = useState(false);
-  const [holidayName, setHolidayName] = useState('');
-  const [holidayDate, setHolidayDate] = useState('2026-11-25');
-  const [holidayCompanyId, setHolidayCompanyId] = useState('ALL');
 
   // Interactive Live Clock In Panel
   const empId = currentEmployee?.id || '';
@@ -42,7 +35,7 @@ export const AttendanceLeavePage: React.FC = () => {
   const myTodayAtt = empId ? attendance.find(a => a.employeeId === empId && a.date === todayStr) : undefined;
   const myBranch = companies.find(c => c.id === currentEmployee?.companyId) || companies[0];
 
-  // Selected Calendar Month for Calendar view
+  // Selected Calendar Month for Calendar view (defaults to Oct 2026)
   const [calMonth, setCalMonth] = useState('2026-10');
 
   // Filter attendance by company
@@ -100,48 +93,67 @@ export const AttendanceLeavePage: React.FC = () => {
     setCorrectionReason('');
   };
 
-  // Handle Add Holiday
-  const handleAddHoliday = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!holidayName.trim()) {
-      Alert.warning('ข้อมูลไม่ครบ', 'กรุณาระบุชื่อวันหยุด');
-      return;
-    }
-    // Prevent duplicate
-    const exists = holidays.some(h => h.date === holidayDate && (h.companyId === holidayCompanyId || holidayCompanyId === 'ALL'));
-    if (exists) {
-      Alert.warning('วันหยุดซ้ำซ้อน', 'มีรายการวันหยุดในวันที่นี้อยู่แล้ว');
-      return;
-    }
+  // Thai Month details for Calendar
+  const THAI_MONTHS = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+  const [calYearStr, calMonthNumStr] = calMonth.split('-');
+  const calYear = parseInt(calYearStr, 10) || 2026;
+  const calMonthNum = parseInt(calMonthNumStr, 10) || 10;
+  const thaiMonthName = THAI_MONTHS[calMonthNum - 1] || 'ตุลาคม';
+  const thaiYear = calYear + 543;
 
-    addHoliday(holidayName, holidayDate, holidayCompanyId);
-    Alert.success('เพิ่มวันหยุดเรียบร้อย', `บันทึกวันหยุด ${holidayName} (${holidayDate})`);
-    setShowHolidayModal(false);
-    setHolidayName('');
+  // Previous and next month handlers
+  const handlePrevMonth = () => {
+    const prevDate = new Date(calYear, calMonthNum - 2, 1);
+    setCalMonth(`${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`);
   };
 
-  // Calendar calculations for current month (Oct 2026)
-  const calendarDays = useMemo(() => {
-    const [yearStr, monthStr] = calMonth.split('-');
-    const year = parseInt(yearStr, 10);
-    const month = parseInt(monthStr, 10);
-    const daysInMonth = new Date(year, month, 0).getDate();
+  const handleNextMonth = () => {
+    const nextDate = new Date(calYear, calMonthNum, 1);
+    setCalMonth(`${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}`);
+  };
+
+  // Calendar calculations for selected month with day-of-week alignment
+  const { calendarDays, firstDayOfWeek, monthHolidays } = useMemo(() => {
+    const daysInMonth = new Date(calYear, calMonthNum, 0).getDate();
+    const firstDay = new Date(calYear, calMonthNum - 1, 1).getDay(); // 0 = Sun, 1 = Mon ...
 
     const days = [];
+    const thisMonthHolidays: typeof holidays = [];
+
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const dateString = `${calYear}-${String(calMonthNum).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dayHolidays = holidays.filter(h => h.date === dateString);
       const dayAttendance = attendance.filter(a => a.date === dateString);
+      const dayOfWeek = new Date(calYear, calMonthNum - 1, day).getDay();
+
+      if (dayHolidays.length > 0) {
+        dayHolidays.forEach(dh => {
+          if (!thisMonthHolidays.some(th => th.id === dh.id)) {
+            thisMonthHolidays.push(dh);
+          }
+        });
+      }
+
       days.push({
         dayNumber: day,
         date: dateString,
+        dayOfWeek,
         holidays: dayHolidays,
         attendanceCount: dayAttendance.length,
       });
     }
-    return days;
-  }, [calMonth, holidays, attendance]);
 
+    return {
+      calendarDays: days,
+      firstDayOfWeek: firstDay,
+      monthHolidays: thisMonthHolidays,
+    };
+  }, [calYear, calMonthNum, holidays, attendance]);
+
+  // Columns for Attendance Table View
   const columns: Column<AttendanceRecord>[] = [
     {
       key: 'date',
@@ -241,7 +253,7 @@ export const AttendanceLeavePage: React.FC = () => {
                 approveAttendanceCorrection(row.id);
                 Alert.success('อนุมัติแก้ไขเวลาสำเร็จ', 'ปรับปรุงเวลาลงงานเรียบร้อยแล้ว');
               }}
-              className="px-2 py-1 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700"
+              className="px-2 py-1 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700 cursor-pointer"
               title="อนุมัติคำขอแก้ไขเวลา"
             >
               อนุมัติแก้เวลา
@@ -254,7 +266,7 @@ export const AttendanceLeavePage: React.FC = () => {
                 setNewClockOut(row.clockOut || '17:00:00');
                 setShowCorrectionModal(true);
               }}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-[#064a8b] hover:bg-slate-100"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-[#064a8b] hover:bg-slate-100 cursor-pointer"
               title="ขอแก้ไขเวลา"
             >
               <i className="fa-solid fa-pen-to-square"></i>
@@ -265,56 +277,56 @@ export const AttendanceLeavePage: React.FC = () => {
     },
   ];
 
-  // Custom Card Renderer for Attendance Logs
+  // Custom Card Renderer for Attendance Logs (Optimized fit for mobile & desktop)
   const renderAttendanceCard = (att: AttendanceRecord) => {
     const badge = getStatusBadge(att.status);
 
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md hover:border-[#064a8b] transition-all flex flex-col justify-between group">
+      <div className="bg-white rounded-2xl border border-slate-200 p-3.5 sm:p-4.5 shadow-xs hover:shadow-md hover:border-[#064a8b] transition-all flex flex-col justify-between group">
         <div>
           {/* Card Top: Date & Status */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
-            <div>
-              <div className="flex items-center gap-1.5 font-bold text-slate-800 text-sm">
-                <i className="fa-regular fa-calendar-check text-[#064a8b]"></i>
-                <span>{formatThaiDate(att.date)}</span>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-2.5 gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 font-bold text-slate-800 text-xs sm:text-sm">
+                <i className="fa-regular fa-calendar-check text-[#064a8b] shrink-0"></i>
+                <span className="truncate">{formatThaiDate(att.date)}</span>
               </div>
-              <span className="text-[10px] text-slate-400 block mt-0.5">
+              <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
                 กะงาน: {att.workShift}
               </span>
             </div>
 
-            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${badge.bgClass} ${badge.textClass}`}>
+            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold shrink-0 ${badge.bgClass} ${badge.textClass}`}>
               <i className={`fa-solid ${badge.icon} text-[9px]`}></i>
-              {badge.label}
+              <span>{badge.label}</span>
             </span>
           </div>
 
           {/* Employee Info */}
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-sm shrink-0">
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
               {att.employeeName.charAt(0)}
             </div>
             <div className="min-w-0">
-              <h4 className="font-bold text-slate-800 text-xs truncate">
+              <h4 className="font-bold text-slate-800 text-xs sm:text-sm truncate">
                 {att.employeeName}
               </h4>
-              <p className="text-[11px] font-mono text-slate-500">
+              <p className="text-[10px] sm:text-[11px] font-mono text-slate-500 truncate">
                 {att.employeeCode}
               </p>
             </div>
           </div>
 
           {/* Time Check-in/Check-out Grid */}
-          <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 mb-3">
+          <div className="grid grid-cols-2 gap-2 bg-slate-50/80 p-2.5 sm:p-3 rounded-xl border border-slate-200/80 mb-3">
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
+              <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
                 เวลาเข้างาน (In)
               </span>
               {att.clockIn ? (
-                <span className="font-black text-sm text-emerald-700 flex items-center gap-1">
-                  <i className="fa-solid fa-arrow-right-to-bracket text-xs text-emerald-600"></i>
-                  {att.clockIn}
+                <span className="font-black text-xs sm:text-sm text-emerald-700 flex items-center gap-1">
+                  <i className="fa-solid fa-arrow-right-to-bracket text-[10px] text-emerald-600"></i>
+                  <span>{att.clockIn}</span>
                 </span>
               ) : (
                 <span className="font-semibold text-xs text-rose-500">
@@ -324,13 +336,13 @@ export const AttendanceLeavePage: React.FC = () => {
             </div>
 
             <div>
-              <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
+              <span className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
                 เวลาออกงาน (Out)
               </span>
               {att.clockOut ? (
-                <span className="font-black text-sm text-emerald-700 flex items-center gap-1">
-                  <i className="fa-solid fa-arrow-right-from-bracket text-xs text-emerald-600"></i>
-                  {att.clockOut}
+                <span className="font-black text-xs sm:text-sm text-emerald-700 flex items-center gap-1">
+                  <i className="fa-solid fa-arrow-right-from-bracket text-[10px] text-emerald-600"></i>
+                  <span>{att.clockOut}</span>
                 </span>
               ) : (
                 <span className="font-semibold text-xs text-slate-400 italic">
@@ -342,34 +354,34 @@ export const AttendanceLeavePage: React.FC = () => {
 
           {/* Location & GPS Info */}
           <div className="space-y-1 text-xs">
-            <div className="flex items-center justify-between text-[11px] text-slate-600">
-              <span className="text-slate-400 truncate max-w-[150px]">
+            <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-600 gap-1">
+              <span className="text-slate-500 truncate max-w-[160px] sm:max-w-[200px]">
                 <i className="fa-solid fa-location-dot mr-1 text-slate-400"></i>
                 {att.locationName}
               </span>
-              <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold">
-                {att.isSimulatedLocation ? 'ข้อมูลจำลอง' : 'GPS จริง'}
-                {att.distanceMeters ? ` (${att.distanceMeters} ม.)` : ''}
+              <span className="px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 text-[9px] sm:text-[10px] font-semibold shrink-0">
+                {att.isSimulatedLocation ? 'จำลอง' : 'GPS จริง'}
+                {att.distanceMeters ? ` (${att.distanceMeters}ม.)` : ''}
               </span>
             </div>
 
             {att.note && (
-              <p className="text-[11px] text-amber-700 bg-amber-50/70 p-2 rounded-lg border border-amber-200 mt-2">
-                <i className="fa-solid fa-circle-exclamation mr-1"></i> {att.note}
+              <p className="text-[10px] sm:text-[11px] text-amber-800 bg-amber-50/70 p-2 rounded-lg border border-amber-200 mt-2 line-clamp-2">
+                <i className="fa-solid fa-circle-exclamation mr-1 text-amber-600"></i> {att.note}
               </p>
             )}
           </div>
         </div>
 
         {/* Action Button */}
-        <div className="pt-3 border-t border-slate-100 mt-3">
+        <div className="pt-2.5 border-t border-slate-100 mt-2.5">
           {att.correctionRequested && (role === 'SUPER_ADMIN' || role === 'HR_MANAGER') ? (
             <button
               onClick={() => {
                 approveAttendanceCorrection(att.id);
                 Alert.success('อนุมัติแก้ไขเวลาสำเร็จ', 'ปรับปรุงเวลาลงงานเรียบร้อยแล้ว');
               }}
-              className="w-full py-1.5 px-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1 shadow-xs"
+              className="w-full py-1.5 px-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1 shadow-xs cursor-pointer"
             >
               <i className="fa-solid fa-check"></i>
               <span>อนุมัติคำขอแก้เวลา</span>
@@ -382,7 +394,7 @@ export const AttendanceLeavePage: React.FC = () => {
                 setNewClockOut(att.clockOut || '17:00:00');
                 setShowCorrectionModal(true);
               }}
-              className="w-full py-1.5 px-3 bg-slate-100 hover:bg-[#064a8b] hover:text-white text-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5"
+              className="w-full py-1.5 px-3 bg-slate-100 hover:bg-[#064a8b] hover:text-white text-slate-700 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <i className="fa-solid fa-pen-to-square"></i>
               <span>ขอแก้ไขเวลา</span>
@@ -393,28 +405,39 @@ export const AttendanceLeavePage: React.FC = () => {
     );
   };
 
+  // Day header array with short names for mobile and full names for desktop
+  const dayHeaders = [
+    { short: 'อา.', full: 'อาทิตย์', isWeekend: true },
+    { short: 'จ.', full: 'จันทร์', isWeekend: false },
+    { short: 'อ.', full: 'อังคาร', isWeekend: false },
+    { short: 'พ.', full: 'พุธ', isWeekend: false },
+    { short: 'พฤ.', full: 'พฤหัสบดี', isWeekend: false },
+    { short: 'ศ.', full: 'ศุกร์', isWeekend: false },
+    { short: 'ส.', full: 'เสาร์', isWeekend: true },
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Interactive Clock In/Out Live Bar for Current User */}
-      <div className="bg-gradient-to-r from-[#022247] to-[#064a8b] rounded-2xl p-5 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-[#022247] to-[#064a8b] rounded-2xl p-3.5 sm:p-5 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-[#c3a138] text-slate-900 flex items-center justify-center font-black text-xl shadow-sm">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#c3a138] text-slate-900 flex items-center justify-center font-black text-lg sm:text-xl shrink-0 shadow-sm">
             <i className="fa-solid fa-fingerprint"></i>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-white/20 text-white font-bold">
                 ลงเวลาปฏิบัติงานเรียลไทม์
               </span>
-              <span className="text-xs text-[#a4b3d3]">
-                {myBranch.name}
+              <span className="text-[10px] sm:text-xs text-[#a4b3d3] truncate">
+                📍 {myBranch.name}
               </span>
             </div>
-            <h3 className="text-base font-bold text-white mt-0.5">
-              สถานะของคุณวันนี้ ({formatThaiDate(todayStr)}):{' '}
+            <h3 className="text-xs sm:text-sm md:text-base font-bold text-white mt-1 leading-snug">
+              สถานะวันนี้ ({formatThaiDate(todayStr)}):{' '}
               {myTodayAtt?.clockIn ? (
                 <span className="text-emerald-300 font-black">
-                  เข้างานแล้ว ({myTodayAtt.clockIn} น.) {myTodayAtt.clockOut ? `| ออกงานแล้ว (${myTodayAtt.clockOut} น.)` : ''}
+                  เข้างาน ({myTodayAtt.clockIn} น.) {myTodayAtt.clockOut ? `| ออกงาน (${myTodayAtt.clockOut} น.)` : ''}
                 </span>
               ) : (
                 <span className="text-amber-300 font-bold">ยังไม่ลงเวลาเข้างาน</span>
@@ -423,39 +446,39 @@ export const AttendanceLeavePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center shrink-0 w-full md:w-auto">
           <button
             onClick={handleQuickClockIn}
             disabled={Boolean(myTodayAtt?.clockIn)}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-[#c3a138] hover:bg-[#d4b348] text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all flex items-center gap-1.5"
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-bold bg-[#c3a138] hover:bg-[#d4b348] text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <i className="fa-solid fa-arrow-right-to-bracket"></i>
-            {myTodayAtt?.clockIn ? 'ลงเวลาเข้าแล้ว' : 'ลงเวลาเข้างาน'}
+            <span>{myTodayAtt?.clockIn ? 'ลงเวลาเข้าแล้ว' : 'ลงเวลาเข้างาน'}</span>
           </button>
           <button
             onClick={handleQuickClockOut}
             disabled={!myTodayAtt?.clockIn || Boolean(myTodayAtt?.clockOut)}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <i className="fa-solid fa-arrow-right-from-bracket"></i>
-            {myTodayAtt?.clockOut ? 'ลงเวลาออกแล้ว' : 'ลงเวลาออกงาน'}
+            <span>{myTodayAtt?.clockOut ? 'ลงเวลาออกแล้ว' : 'ลงเวลาออกงาน'}</span>
           </button>
         </div>
       </div>
 
-      {/* Main Tabs: ตารางลงเวลา | ปฏิทินวันลา & วันทำงาน | วันหยุดบริษัท */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-1">
+      {/* Main Tabs: 2 Tabs - Adjusted for perfect frame & text sizing */}
+      <div className="grid grid-cols-2 gap-1.5 sm:gap-2 p-1 bg-slate-100 rounded-2xl border border-slate-200">
         <button
           onClick={() => setActiveTab('ATTENDANCE')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer ${
             activeTab === 'ATTENDANCE'
               ? 'bg-[#064a8b] text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
-          <i className="fa-solid fa-clipboard-user"></i>
-          <span>ประวัติการลงเวลาทำงาน</span>
-          <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
+          <i className="fa-solid fa-clipboard-user text-xs sm:text-sm shrink-0"></i>
+          <span className="truncate">ประวัติการลงเวลาทำงาน</span>
+          <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-bold shrink-0 ${
             activeTab === 'ATTENDANCE' ? 'bg-[#c3a138] text-slate-900' : 'bg-slate-200 text-slate-700'
           }`}>
             {filteredAttendance.length}
@@ -464,31 +487,14 @@ export const AttendanceLeavePage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('CALENDAR')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`py-2 sm:py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer ${
             activeTab === 'CALENDAR'
               ? 'bg-[#064a8b] text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
-          <i className="fa-solid fa-calendar-days"></i>
-          <span>ปฏิทินวันทำงานและวันหยุด</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('HOLIDAYS')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'HOLIDAYS'
-              ? 'bg-[#064a8b] text-white shadow-xs'
-              : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-          }`}
-        >
-          <i className="fa-solid fa-umbrella-beach"></i>
-          <span>กำหนดวันหยุดประจำปี</span>
-          <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
-            activeTab === 'HOLIDAYS' ? 'bg-[#c3a138] text-slate-900' : 'bg-slate-200 text-slate-700'
-          }`}>
-            {holidays.length}
-          </span>
+          <i className="fa-solid fa-calendar-days text-xs sm:text-sm shrink-0"></i>
+          <span className="truncate">ปฏิทินวันทำงานและวันหยุด</span>
         </button>
       </div>
 
@@ -504,71 +510,142 @@ export const AttendanceLeavePage: React.FC = () => {
         />
       )}
 
-      {/* Tab 2: Monthly Calendar View */}
+      {/* Tab 2: Monthly Calendar View (Perfect grid & font scaling) */}
       {activeTab === 'CALENDAR' && (
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3 sm:space-y-4">
+          {/* Header Bar with Month Navigation */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="font-bold text-base text-slate-800 flex items-center gap-2">
+              <h3 className="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2">
                 <i className="fa-solid fa-calendar-days text-[#064a8b]"></i>
-                ปฏิทินรอบเดือนตุลาคม 2569
+                <span>ปฏิทินรอบเดือน{thaiMonthName} {thaiYear}</span>
               </h3>
-              <p className="text-xs text-slate-500">แสดงวันหยุดประเพณีและสถิติการลงเวลาของทีม</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                แสดงวันหยุดประเพณีและสถิติการลงเวลาทำงานของทีม
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-600">เลือกเดือน:</span>
+
+            {/* Month Switcher Controls */}
+            <div className="flex items-center gap-1.5 sm:gap-2 self-start sm:self-auto">
+              <button
+                onClick={handlePrevMonth}
+                className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                title="เดือนก่อนหน้า"
+              >
+                <i className="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+
               <input
                 type="month"
                 value={calMonth}
                 onChange={e => setCalMonth(e.target.value)}
-                className="text-xs p-1.5 border border-slate-300 rounded-lg bg-white"
+                className="text-xs p-1.5 border border-slate-300 rounded-lg bg-white font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#064a8b]"
               />
+
+              <button
+                onClick={handleNextMonth}
+                className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 flex items-center justify-center text-slate-600 transition-colors cursor-pointer"
+                title="เดือนถัดไป"
+              >
+                <i className="fa-solid fa-chevron-right text-xs"></i>
+              </button>
             </div>
           </div>
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-2 text-center text-xs">
-            {['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'].map((dayName, idx) => (
-              <div key={dayName} className={`p-2 font-bold rounded-lg ${idx === 0 || idx === 6 ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-700'}`}>
-                {dayName}
+          {/* Quick Color Legend */}
+          <div className="flex flex-wrap items-center gap-2 text-[10px] sm:text-[11px] text-slate-600 pt-1 pb-1 border-y border-slate-100">
+            <span className="font-bold text-slate-700">สัญลักษณ์:</span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-[#064a8b] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#064a8b]"></span> วันนี้
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-50 border border-purple-200 text-purple-800 font-semibold">
+              🏖️ วันหยุดประเพณี
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 font-semibold">
+              <i className="fa-solid fa-users text-[9px]"></i> มีบันทึกเวลา
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-50 border border-rose-200 text-rose-700 font-semibold">
+              วันหยุดสุดสัปดาห์
+            </span>
+          </div>
+
+          {/* Calendar Grid: 7 Columns with optimized day headings & cells */}
+          <div className="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs">
+            {/* Day Header Row */}
+            {dayHeaders.map((h, idx) => (
+              <div
+                key={idx}
+                className={`py-1.5 px-0.5 sm:p-2 font-bold rounded-lg text-[10px] sm:text-xs ${
+                  h.isWeekend ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-700'
+                }`}
+              >
+                <span className="sm:hidden">{h.short}</span>
+                <span className="hidden sm:inline">{h.full}</span>
               </div>
             ))}
 
+            {/* Empty Spacer Cells for Day-of-Week offset */}
+            {Array.from({ length: firstDayOfWeek }).map((_, idx) => (
+              <div
+                key={`empty-start-${idx}`}
+                className="min-h-[58px] sm:min-h-[85px] p-1 sm:p-2 rounded-lg sm:rounded-xl bg-slate-50/40 border border-slate-100/60 opacity-40"
+              />
+            ))}
+
+            {/* Calendar Day Cells */}
             {calendarDays.map(item => {
               const hasHoliday = item.holidays.length > 0;
               const isToday = item.date === todayStr;
+              const isWeekend = item.dayOfWeek === 0 || item.dayOfWeek === 6;
+
               return (
                 <div
                   key={item.date}
-                  className={`min-h-[90px] p-2 rounded-xl border text-left flex flex-col justify-between transition-all ${
-                    isToday ? 'border-[#064a8b] bg-blue-50/40 ring-2 ring-[#064a8b]/20' :
-                    hasHoliday ? 'border-purple-200 bg-purple-50/30' :
-                    'border-slate-200 bg-white hover:bg-slate-50'
+                  className={`min-h-[58px] sm:min-h-[85px] p-1 sm:p-2 rounded-lg sm:rounded-xl border text-left flex flex-col justify-between transition-all ${
+                    isToday
+                      ? 'border-[#064a8b] bg-blue-50/60 ring-2 ring-[#064a8b]/20 shadow-xs'
+                      : hasHoliday
+                      ? 'border-purple-300 bg-purple-50/50'
+                      : isWeekend
+                      ? 'border-slate-200 bg-slate-50/50 hover:bg-slate-100/50'
+                      : 'border-slate-200 bg-white hover:bg-slate-50'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs ${
-                      isToday ? 'bg-[#064a8b] text-white' : 'text-slate-800'
-                    }`}>
+                  {/* Day Number and Today badge */}
+                  <div className="flex items-center justify-between gap-0.5">
+                    <span
+                      className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center font-bold text-[10px] sm:text-xs shrink-0 ${
+                        isToday
+                          ? 'bg-[#064a8b] text-white shadow-xs'
+                          : isWeekend
+                          ? 'text-rose-600 font-semibold'
+                          : 'text-slate-800'
+                      }`}
+                    >
                       {item.dayNumber}
                     </span>
                     {isToday && (
-                      <span className="text-[9px] bg-blue-100 text-[#064a8b] px-1 rounded font-bold">
+                      <span className="text-[8px] sm:text-[9px] bg-blue-100 text-[#064a8b] px-1 py-0.2 rounded font-bold shrink-0">
                         วันนี้
                       </span>
                     )}
                   </div>
 
-                  <div className="space-y-1 mt-1">
+                  {/* Holidays & Attendance Info */}
+                  <div className="space-y-0.5 sm:space-y-1 mt-0.5 sm:mt-1 overflow-hidden">
                     {item.holidays.map(h => (
-                      <div key={h.id} className="text-[10px] p-1 bg-purple-100 text-purple-800 rounded font-bold truncate" title={h.name}>
+                      <div
+                        key={h.id}
+                        className="text-[8px] sm:text-[10px] p-0.5 sm:p-1 bg-purple-100 text-purple-900 rounded font-semibold truncate leading-tight"
+                        title={h.name}
+                      >
                         🏖️ {h.name}
                       </div>
                     ))}
                     {item.attendanceCount > 0 && (
-                      <div className="text-[10px] text-emerald-700 font-semibold">
-                        <i className="fa-solid fa-users text-[9px] mr-1"></i>
-                        ลงเวลา {item.attendanceCount} คน
+                      <div className="text-[8px] sm:text-[10px] text-emerald-700 font-bold truncate leading-tight flex items-center gap-0.5">
+                        <i className="fa-solid fa-users text-[7px] sm:text-[9px] shrink-0"></i>
+                        <span>{item.attendanceCount} คน</span>
                       </div>
                     )}
                   </div>
@@ -576,62 +653,27 @@ export const AttendanceLeavePage: React.FC = () => {
               );
             })}
           </div>
-        </div>
-      )}
 
-      {/* Tab 3: Holidays Management */}
-      {activeTab === 'HOLIDAYS' && (
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-base text-slate-800 flex items-center gap-2">
+          {/* Monthly Holidays Summary Badge List (Clean, non-intrusive) */}
+          {monthHolidays.length > 0 && (
+            <div className="bg-purple-50/40 rounded-xl p-3 border border-purple-100 space-y-2 mt-2">
+              <h4 className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
                 <i className="fa-solid fa-umbrella-beach text-purple-600"></i>
-                กำหนดวันหยุดตามประเพณี VN Group (ปี 2569)
-              </h3>
-              <p className="text-xs text-slate-500">วันหยุดประจำปีสำหรับคำนวณวันทำงานและวันลา</p>
-            </div>
-            {(role === 'SUPER_ADMIN' || role === 'HR_MANAGER') && (
-              <button
-                onClick={() => setShowHolidayModal(true)}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-[#064a8b] text-white hover:bg-[#022247] flex items-center gap-1.5"
-              >
-                <i className="fa-solid fa-plus text-[#c3a138]"></i>
-                เพิ่มวันหยุดใหม่
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {holidays.map(h => (
-              <div
-                key={h.id}
-                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex items-center justify-between gap-3"
-              >
-                <div>
-                  <p className="font-bold text-slate-800 text-xs">{h.name}</p>
-                  <p className="text-[11px] text-purple-700 font-semibold mt-0.5">
-                    {formatThaiDate(h.date)}
-                  </p>
-                  <span className="text-[10px] text-slate-400">
-                    {h.companyId === 'ALL' ? 'ทุกสาขา' : companies.find(c => c.id === h.companyId)?.shortName}
-                  </span>
-                </div>
-
-                {(role === 'SUPER_ADMIN' || role === 'HR_MANAGER') && (
-                  <button
-                    onClick={() => {
-                      deleteHoliday(h.id);
-                      Alert.success('ลบวันหยุดแล้ว');
-                    }}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50"
-                    title="ลบวันหยุด"
+                <span>วันหยุดตามประเพณีในเดือนนี้ ({thaiMonthName} {thaiYear}):</span>
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5">
+                {monthHolidays.map(h => (
+                  <div
+                    key={h.id}
+                    className="text-[11px] bg-white p-2 rounded-lg border border-purple-200/70 flex items-center justify-between gap-2 shadow-2xs"
                   >
-                    <i className="fa-solid fa-trash-can"></i>
-                  </button>
-                )}
+                    <span className="font-semibold text-slate-800 truncate">🏖️ {h.name}</span>
+                    <span className="text-[10px] text-purple-700 font-bold shrink-0">{formatThaiDate(h.date)}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -640,19 +682,19 @@ export const AttendanceLeavePage: React.FC = () => {
         isOpen={showCorrectionModal}
         onClose={() => setShowCorrectionModal(false)}
         title="ขอแก้ไขเวลาการลงงาน (Attendance Correction)"
-        subtitle={`พนักงาน: ${targetAttForCorrection?.employeeName} (วันที่ ${formatThaiDate(targetAttForCorrection?.date)})`}
+        subtitle={`พนักงาน: ${targetAttForCorrection?.employeeName} (วันที่ ${formatThaiDate(targetAttForCorrection?.date || '')})`}
         size="md"
         footer={
           <>
             <button
               onClick={() => setShowCorrectionModal(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200"
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 cursor-pointer"
             >
               ยกเลิก
             </button>
             <button
               onClick={handleCorrectionSubmit}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] text-white hover:bg-[#022247]"
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] text-white hover:bg-[#022247] cursor-pointer"
             >
               ส่งคำขอแก้ไขเวลา
             </button>
@@ -702,68 +744,6 @@ export const AttendanceLeavePage: React.FC = () => {
               className="w-full p-2.5 border border-slate-300 rounded-xl"
               required
             />
-          </div>
-        </form>
-      </Modal>
-
-      {/* Modal: Add Holiday */}
-      <Modal
-        isOpen={showHolidayModal}
-        onClose={() => setShowHolidayModal(false)}
-        title="เพิ่มวันหยุดประจำปีบริษัท"
-        subtitle="วันหยุดตามประเพณี VN Group"
-        size="md"
-        footer={
-          <>
-            <button
-              onClick={() => setShowHolidayModal(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200"
-            >
-              ยกเลิก
-            </button>
-            <button
-              onClick={handleAddHoliday}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] text-white hover:bg-[#022247]"
-            >
-              บันทึกวันหยุด
-            </button>
-          </>
-        }
-      >
-        <form onSubmit={handleAddHoliday} className="space-y-3 text-xs">
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">ชื่อวันหยุด: *</label>
-            <input
-              type="text"
-              value={holidayName}
-              onChange={e => setHolidayName(e.target.value)}
-              placeholder="เช่น วันหยุดพิเศษประจำสาขา"
-              className="w-full p-2.5 border border-slate-300 rounded-xl"
-              required
-            />
-          </div>
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">วันที่: *</label>
-            <input
-              type="date"
-              value={holidayDate}
-              onChange={e => setHolidayDate(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl"
-              required
-            />
-          </div>
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">สาขาที่บังคับใช้:</label>
-            <select
-              value={holidayCompanyId}
-              onChange={e => setHolidayCompanyId(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl bg-white"
-            >
-              <option value="ALL">ทุกสาขา (ทั่วทั้งเครือ)</option>
-              {companies.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
           </div>
         </form>
       </Modal>

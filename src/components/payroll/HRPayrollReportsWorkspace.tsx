@@ -221,53 +221,59 @@ export const HRPayrollReportsWorkspace: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-[#022247] flex items-center gap-2">
-            <i className="fa-solid fa-money-check-dollar text-[#064a8b]"></i>
-            เงินเดือนและรายงาน (Payroll & Reports Workspace)
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            คำนวณเงินเดือน ประกันสังคม กยศ. ภาษี แก้ไขยอดแบบแมนนวล พิมพ์สลิป และรายงานสารสนเทศ
-          </p>
+      {/* Top Header: Equalized Layout & Touch-Friendly on Mobile */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-blue-50 text-[#064a8b] flex items-center justify-center text-lg sm:text-xl shrink-0 mt-0.5 sm:mt-0">
+            <i className="fa-solid fa-money-check-dollar"></i>
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-[#022247] leading-tight">
+              เงินเดือนและรายงาน (Payroll & Reports Workspace)
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              คำนวณเงินเดือน ประกันสังคม กยศ. ภาษี แก้ไขยอดแบบแมนนวล พิมพ์สลิป และรายงานสารสนเทศ
+            </p>
+          </div>
         </div>
 
         {workspaceTab === 'PAYROLL' && (role === 'SUPER_ADMIN' || role === 'HR_MANAGER') && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-sm transition-all flex items-center gap-1.5 shrink-0"
+            className="w-full md:w-auto px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-sm transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
           >
             <i className="fa-solid fa-plus text-[#c3a138]"></i>
-            สร้างรอบเงินเดือนใหม่
+            <span className="truncate">สร้างรอบเงินเดือนใหม่</span>
           </button>
         )}
       </div>
 
-      {/* 2 Core Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs">
+      {/* 2 Core Navigation Tabs: Mobile 2-Column Grid with No Excessive Text Wrapping */}
+      <div className="grid grid-cols-2 gap-2 text-xs">
         <button
           onClick={() => setWorkspaceTab('PAYROLL')}
-          className={`px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
+          className={`py-2.5 px-2 sm:px-4 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs cursor-pointer ${
             workspaceTab === 'PAYROLL'
               ? 'bg-[#064a8b] text-white shadow-xs'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
-          <i className="fa-solid fa-receipt"></i>
-          <span>1) เงินเดือนและสลิป (Payroll & Payslips)</span>
+          <i className="fa-solid fa-receipt text-xs shrink-0"></i>
+          <span className="truncate">1) เงินเดือนและสลิป</span>
+          <span className="hidden sm:inline text-[10px] opacity-75">(Payroll)</span>
         </button>
 
         <button
           onClick={() => setWorkspaceTab('REPORTS')}
-          className={`px-5 py-2.5 rounded-xl font-bold transition-all flex items-center gap-2 ${
+          className={`py-2.5 px-2 sm:px-4 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs cursor-pointer ${
             workspaceTab === 'REPORTS'
               ? 'bg-[#064a8b] text-white shadow-xs'
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
           }`}
         >
-          <i className="fa-solid fa-file-chart-column"></i>
-          <span>2) โซนบริหารหน้ารายงาน (Reports & Analytics)</span>
+          <i className="fa-solid fa-file-chart-column text-xs shrink-0"></i>
+          <span className="truncate">2) โซนหน้ารายงาน</span>
+          <span className="hidden sm:inline text-[10px] opacity-75">(Reports)</span>
         </button>
       </div>
 
@@ -275,19 +281,19 @@ export const HRPayrollReportsWorkspace: React.FC = () => {
           SECTION 1: PAYROLL & PAYSLIPS
          ========================================== */}
       {workspaceTab === 'PAYROLL' && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Cycle Selector & Controls */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-bold text-slate-600">เลือกรอบเงินเดือน:</span>
+          <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-3 sm:space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3 sm:pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full md:w-auto">
+                <span className="text-xs font-bold text-slate-600 shrink-0">เลือกรอบเงินเดือน:</span>
                 <select
                   value={selectedCycle?.id}
                   onChange={e => {
                     const found = payrollCycles.find(c => c.id === e.target.value);
                     if (found) setSelectedCycle(found);
                   }}
-                  className="text-xs bg-slate-50 border border-slate-300 rounded-xl p-2 font-bold text-slate-800"
+                  className="w-full sm:w-auto text-xs bg-slate-50 border border-slate-300 rounded-xl p-2.5 font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#064a8b]"
                 >
                   {filteredCycles.map(c => (
                     <option key={c.id} value={c.id}>
@@ -298,68 +304,68 @@ export const HRPayrollReportsWorkspace: React.FC = () => {
               </div>
 
               {selectedCycle && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={`px-3 py-1 rounded-full text-xs font-black ${getStatusBadge(selectedCycle.status).bgClass} ${getStatusBadge(selectedCycle.status).textClass}`}>
+                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-black shrink-0 ${getStatusBadge(selectedCycle.status).bgClass} ${getStatusBadge(selectedCycle.status).textClass}`}>
                     สถานะ: {getStatusBadge(selectedCycle.status).label}
                   </span>
 
                   {(selectedCycle.status === 'DRAFT' || selectedCycle.status === 'CALCULATED') && (
                     <button
                       onClick={() => handleCalculate(selectedCycle.id)}
-                      className="px-3.5 py-1.5 bg-[#064a8b] text-white rounded-xl text-xs font-bold hover:bg-[#022247] shadow-xs flex items-center gap-1"
+                      className="flex-1 sm:flex-initial px-3.5 py-2 bg-[#064a8b] text-white rounded-xl text-xs font-bold hover:bg-[#022247] shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <i className="fa-solid fa-calculator"></i>
-                      {selectedCycle.status === 'CALCULATED' ? 'คำนวณใหม่' : 'คำนวณเงินเดือน'}
+                      <span>{selectedCycle.status === 'CALCULATED' ? 'คำนวณใหม่' : 'คำนวณเงินเดือน'}</span>
                     </button>
                   )}
 
                   {selectedCycle.status === 'CALCULATED' && (
                     <button
                       onClick={() => handleApprove(selectedCycle.id)}
-                      className="px-3.5 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 shadow-xs flex items-center gap-1"
+                      className="flex-1 sm:flex-initial px-3.5 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold hover:bg-purple-700 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <i className="fa-solid fa-lock"></i>
-                      อนุมัติรอบเงินเดือน
+                      <span>อนุมัติรอบเงินเดือน</span>
                     </button>
                   )}
 
                   {selectedCycle.status === 'APPROVED' && (
                     <button
                       onClick={() => handlePay(selectedCycle.id)}
-                      className="px-3.5 py-1.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-xs flex items-center gap-1"
+                      className="flex-1 sm:flex-initial px-3.5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <i className="fa-solid fa-money-bill-wave"></i>
-                      บันทึกจ่ายเงิน & เผยแพร่สลิป
+                      <span>บันทึกจ่ายเงิน & เผยแพร่สลิป</span>
                     </button>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Cycle Metrics Bar */}
+            {/* Cycle Metrics Bar: Clean fit on mobile */}
             {selectedCycle && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="text-[11px] text-slate-500 font-semibold block">พนักงานในรอบ</span>
-                  <span className="text-xl font-black text-slate-800 mt-0.5 block">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 pt-1">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <span className="text-[10px] sm:text-[11px] text-slate-500 font-semibold block truncate">พนักงานในรอบ</span>
+                  <span className="text-base sm:text-xl font-black text-slate-800 mt-0.5 block truncate">
                     {selectedCycle.totalEmployees || selectedCycle.snapshots.length} คน
                   </span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-blue-50/60 border border-blue-200">
-                  <span className="text-[11px] text-[#064a8b] font-semibold block">ยอดรวมรายได้ (Gross)</span>
-                  <span className="text-xl font-black text-[#064a8b] mt-0.5 block">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-blue-50/60 border border-blue-200">
+                  <span className="text-[10px] sm:text-[11px] text-[#064a8b] font-semibold block truncate">ยอดรายได้ (Gross)</span>
+                  <span className="text-base sm:text-xl font-black text-[#064a8b] mt-0.5 block truncate">
                     {formatCurrency(selectedCycle.totalGrossAmount)} บ.
                   </span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-rose-50/60 border border-rose-200">
-                  <span className="text-[11px] text-rose-700 font-semibold block">ยอดหักรวม (Deductions)</span>
-                  <span className="text-xl font-black text-rose-700 mt-0.5 block">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-rose-50/60 border border-rose-200">
+                  <span className="text-[10px] sm:text-[11px] text-rose-700 font-semibold block truncate">ยอดหัก (Deductions)</span>
+                  <span className="text-base sm:text-xl font-black text-rose-700 mt-0.5 block truncate">
                     {formatCurrency(selectedCycle.totalDeductions)} บ.
                   </span>
                 </div>
-                <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200">
-                  <span className="text-[11px] text-emerald-800 font-semibold block">ยอดจ่ายสุทธิ (Net Total)</span>
-                  <span className="text-xl font-black text-emerald-700 mt-0.5 block">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200">
+                  <span className="text-[10px] sm:text-[11px] text-emerald-800 font-semibold block truncate">จ่ายสุทธิ (Net Total)</span>
+                  <span className="text-base sm:text-xl font-black text-emerald-700 mt-0.5 block truncate">
                     {formatCurrency(selectedCycle.totalNetAmount)} บ.
                   </span>
                 </div>

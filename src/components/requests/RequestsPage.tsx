@@ -475,57 +475,59 @@ export const RequestsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header and Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-        <div>
-          <h2 className="text-xl font-black text-[#022247] flex items-center gap-2">
-            <i className="fa-solid fa-envelope-open-text text-[#064a8b]"></i>
-            ระบบคำขอและการอนุมัติ (Leave & OT Center)
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div className="text-center sm:text-left flex flex-col items-center sm:items-start w-full sm:w-auto">
+          <div className="flex items-center justify-center sm:justify-start gap-2">
+            <i className="fa-solid fa-envelope-open-text text-[#064a8b] text-base sm:text-lg"></i>
+            <h2 className="text-base sm:text-xl font-black text-[#022247]">
+              ระบบคำขอและการอนุมัติ (Leave & OT Center)
+            </h2>
+          </div>
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-1 max-w-sm sm:max-w-none text-center sm:text-left">
             รวมคำขอลาหยุดและคำขอทำงานล่วงเวลา (OT) ในหน้าเดียว ตรวจสอบและอนุมัติตามสายงาน
           </p>
         </div>
 
         {role !== 'SUPER_ADMIN' ? (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center gap-2 sm:gap-2.5 w-full sm:w-auto">
             <button
               onClick={() => setShowLeaveModal(true)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-sm transition-all flex items-center gap-1.5"
+              className="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-sm transition-all flex items-center gap-1.5 cursor-pointer text-center"
             >
               <i className="fa-solid fa-calendar-plus text-[#c3a138]"></i>
-              ยื่นคำขอลาหยุด
+              <span>ยื่นคำขอลาหยุด</span>
             </button>
             <button
               onClick={() => setShowOTModal(true)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-all flex items-center gap-1.5"
+              className="flex-1 sm:flex-initial justify-center px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition-all flex items-center gap-1.5 cursor-pointer text-center"
             >
               <i className="fa-solid fa-business-time"></i>
-              ยื่นคำขอ OT
+              <span>ยื่นคำขอ OT</span>
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-100 text-purple-900 border border-purple-200 flex items-center gap-1.5">
+          <div className="flex items-center justify-center sm:justify-start w-full sm:w-auto">
+            <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-100 text-purple-900 border border-purple-200 flex items-center justify-center gap-1.5 text-center">
               <i className="fa-solid fa-crown text-purple-600"></i>
-              ศูนย์พิจารณาอนุมัติคำขอ (Super Admin)
+              <span>ศูนย์พิจารณาอนุมัติคำขอ (Super Admin)</span>
             </span>
           </div>
         )}
       </div>
 
-      {/* 3 Tabs: รออนุมัติ | คำขอทั้งหมด | ประวัติการอนุมัติ */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-1">
+      {/* 3 Tabs: รออนุมัติ | คำขอทั้งหมด | ประวัติการอนุมัติ (Mobile Icon Resized Down) */}
+      <div className="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2 border-b border-slate-200 pb-1">
         <button
           onClick={() => setActiveTab('PENDING')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-2 min-w-0 cursor-pointer ${
             activeTab === 'PENDING'
               ? 'bg-[#064a8b] text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <i className="fa-solid fa-hourglass-half"></i>
-          <span>รออนุมัติ</span>
-          <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
+          <i className="fa-solid fa-hourglass-half text-[10px] sm:text-xs shrink-0"></i>
+          <span className="truncate">รออนุมัติ</span>
+          <span className={`px-1.5 py-0.2 text-[9px] sm:text-[10px] rounded-full font-bold shrink-0 ${
             activeTab === 'PENDING' ? 'bg-[#c3a138] text-slate-900' : 'bg-slate-200 text-slate-700'
           }`}>
             {requests.filter(r => r.status === 'PENDING').length}
@@ -534,15 +536,15 @@ export const RequestsPage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('ALL')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-2 min-w-0 cursor-pointer ${
             activeTab === 'ALL'
               ? 'bg-[#064a8b] text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <i className="fa-solid fa-list-check"></i>
-          <span>คำขอทั้งหมด</span>
-          <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
+          <i className="fa-solid fa-list-check text-[10px] sm:text-xs shrink-0"></i>
+          <span className="truncate">คำขอทั้งหมด</span>
+          <span className={`px-1.5 py-0.2 text-[9px] sm:text-[10px] rounded-full font-bold shrink-0 ${
             activeTab === 'ALL' ? 'bg-[#c3a138] text-slate-900' : 'bg-slate-200 text-slate-700'
           }`}>
             {requests.length}
@@ -551,15 +553,15 @@ export const RequestsPage: React.FC = () => {
 
         <button
           onClick={() => setActiveTab('HISTORY')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all flex items-center justify-center gap-1 sm:gap-2 min-w-0 cursor-pointer ${
             activeTab === 'HISTORY'
               ? 'bg-[#064a8b] text-white shadow-xs'
               : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <i className="fa-solid fa-clock-rotate-left"></i>
-          <span>ประวัติการอนุมัติ</span>
-          <span className={`px-1.5 py-0.2 text-[10px] rounded-full font-bold ${
+          <i className="fa-solid fa-clock-rotate-left text-[10px] sm:text-xs shrink-0"></i>
+          <span className="truncate">ประวัติการอนุมัติ</span>
+          <span className={`px-1.5 py-0.2 text-[9px] sm:text-[10px] rounded-full font-bold shrink-0 ${
             activeTab === 'HISTORY' ? 'bg-[#c3a138] text-slate-900' : 'bg-slate-200 text-slate-700'
           }`}>
             {requests.filter(r => r.status !== 'PENDING').length}

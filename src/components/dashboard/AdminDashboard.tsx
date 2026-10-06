@@ -114,9 +114,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
     Alert.success('ปรับสถานะสำเร็จ', `${empName} ได้รับการบรรจุเป็นพนักงานประจำเรียบร้อยแล้ว`);
   };
 
-  // Add Policy Submit
+  // Add Policy Submit (Restricted exclusively to Super Admin)
   const handleAddPolicySubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (role !== 'SUPER_ADMIN') {
+      Alert.error('ไม่มีสิทธิ์ดำเนินการ', 'เฉพาะ Super Admin เท่านั้นที่สามารถเพิ่มหรือแก้ไขนโยบายได้');
+      return;
+    }
     if (!policyTitle.trim() || !policyContent.trim()) {
       Alert.warning('ข้อมูลไม่ครบ', 'กรุณาระบุหัวข้อนโยบายและรายละเอียด');
       return;
@@ -398,81 +402,84 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
       {/* =========================================
           SECTION 3: นโยบายของแต่ละบริษัท (COMPANY POLICY MANAGER)
+          (เฉพาะ Super Admin เท่านั้นที่เห็นและสามารถเพิ่ม/ลบ/จัดการนโยบายได้)
          ========================================= */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
-        <div className="flex flex-col gap-3 border-b border-slate-100 pb-3">
-          <div>
-            <h3 className="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
-              <i className="fa-solid fa-file-shield text-[#064a8b]"></i>
-              จัดการนโยบายประจำสาขา (Company Policies)
-            </h3>
-            <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
-              Super Admin สามารถกำหนดและเพิ่มระเบียบนโยบายเฉพาะของบริษัทและสาขานั้นๆ ได้โดยตรง
-            </p>
-          </div>
+      {role === 'SUPER_ADMIN' && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
+          <div className="flex flex-col gap-3 border-b border-slate-100 pb-3">
+            <div>
+              <h3 className="font-black text-slate-800 text-sm sm:text-base flex items-center gap-2">
+                <i className="fa-solid fa-file-shield text-[#064a8b]"></i>
+                จัดการนโยบายประจำสาขา (Company Policies)
+              </h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
+                Super Admin สามารถกำหนดและเพิ่มระเบียบนโยบายเฉพาะของบริษัทและสาขานั้นๆ ได้โดยตรง
+              </p>
+            </div>
 
-          {/* Controls: Branch Selector & Add Button (Mobile-friendly Stack) */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <span className="text-xs font-semibold text-slate-500 shrink-0 hidden sm:inline">สาขา:</span>
-              <select
-                value={policyCompanyId}
-                onChange={e => setPolicyCompanyId(e.target.value)}
-                className="w-full sm:w-auto flex-1 min-w-0 text-xs bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 truncate focus:outline-none focus:ring-2 focus:ring-[#064a8b]"
+            {/* Controls: Branch Selector & Add Button (Mobile-friendly Stack) */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <span className="text-xs font-semibold text-slate-500 shrink-0 hidden sm:inline">สาขา:</span>
+                <select
+                  value={policyCompanyId}
+                  onChange={e => setPolicyCompanyId(e.target.value)}
+                  className="w-full sm:w-auto flex-1 min-w-0 text-xs bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-xl px-3 py-2 font-bold text-slate-800 truncate focus:outline-none focus:ring-2 focus:ring-[#064a8b]"
+                >
+                  {companies.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                onClick={() => setShowAddPolicyModal(true)}
+                className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
               >
-                {companies.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                <i className="fa-solid fa-plus text-[#c3a138]"></i>
+                <span>เพิ่มนโยบายบริษัทนี้</span>
+              </button>
             </div>
+          </div>
 
-            <button
-              onClick={() => setShowAddPolicyModal(true)}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-xs transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
-            >
-              <i className="fa-solid fa-plus text-[#c3a138]"></i>
-              <span>เพิ่มนโยบายบริษัทนี้</span>
-            </button>
+          {/* Policies List for selected company */}
+          <div className="space-y-3">
+            {(!currentPolicyCompany.policies || currentPolicyCompany.policies.length === 0) ? (
+              <div className="p-5 sm:p-6 bg-slate-50 rounded-xl text-center text-slate-400 text-xs">
+                ยังไม่มีการระบุนโยบายเฉพาะสำหรับสาขานี้ กดปุ่ม <strong>"+ เพิ่มนโยบายบริษัทนี้"</strong> เพื่อสร้างใหม่
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                {currentPolicyCompany.policies.map(pol => (
+                  <div key={pol.id} className="bg-slate-50/70 p-3.5 sm:p-4 rounded-xl border border-slate-200 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5 truncate">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#064a8b] shrink-0"></span>
+                        <span className="truncate">{pol.title}</span>
+                      </h4>
+                      <button
+                        onClick={() => {
+                          Alert.confirm('ลบนโยบาย', `ต้องการลบนโยบาย "${pol.title}" หรือไม่?`).then(yes => {
+                            if (yes) deleteCompanyPolicy(currentPolicyCompany.id, pol.id);
+                          });
+                        }}
+                        className="text-slate-400 hover:text-rose-600 text-xs p-1 cursor-pointer shrink-0"
+                        title="ลบนโยบาย"
+                      >
+                        <i className="fa-solid fa-trash-can"></i>
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">{pol.content}</p>
+                    <span className="text-[10px] text-slate-400 block pt-1 border-t border-slate-200">
+                      วันที่มีผลบังคับใช้: {formatThaiDate(pol.effectiveDate)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Policies List for selected company */}
-        <div className="space-y-3">
-          {(!currentPolicyCompany.policies || currentPolicyCompany.policies.length === 0) ? (
-            <div className="p-5 sm:p-6 bg-slate-50 rounded-xl text-center text-slate-400 text-xs">
-              ยังไม่มีการระบุนโยบายเฉพาะสำหรับสาขานี้ กดปุ่ม <strong>"+ เพิ่มนโยบายบริษัทนี้"</strong> เพื่อสร้างใหม่
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
-              {currentPolicyCompany.policies.map(pol => (
-                <div key={pol.id} className="bg-slate-50/70 p-3.5 sm:p-4 rounded-xl border border-slate-200 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className="font-bold text-slate-800 text-xs flex items-center gap-1.5 truncate">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#064a8b] shrink-0"></span>
-                      <span className="truncate">{pol.title}</span>
-                    </h4>
-                    <button
-                      onClick={() => {
-                        Alert.confirm('ลบนโยบาย', `ต้องการลบนโยบาย "${pol.title}" หรือไม่?`).then(yes => {
-                          if (yes) deleteCompanyPolicy(currentPolicyCompany.id, pol.id);
-                        });
-                      }}
-                      className="text-slate-400 hover:text-rose-600 text-xs p-1 cursor-pointer shrink-0"
-                      title="ลบนโยบาย"
-                    >
-                      <i className="fa-solid fa-trash-can"></i>
-                    </button>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed">{pol.content}</p>
-                  <span className="text-[10px] text-slate-400 block pt-1 border-t border-slate-200">
-                    วันที่มีผลบังคับใช้: {formatThaiDate(pol.effectiveDate)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* =========================================
           SECTION 4: PENDING APPROVALS OVERVIEW & ONE-CLICK APPROVAL
@@ -548,55 +555,57 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       {/* Leave Statistics Breakdown Section */}
       <LeaveStatisticsCard />
 
-      {/* Modal: Add Policy */}
-      <Modal
-        isOpen={showAddPolicyModal}
-        onClose={() => setShowAddPolicyModal(false)}
-        title={`เพิ่มนโยบายใหม่: ${currentPolicyCompany.name}`}
-        subtitle="กำหนดระเบียบและข้อบังคับเฉพาะสำหรับสาขานี้"
-        size="md"
-        footer={
-          <>
-            <button
-              onClick={() => setShowAddPolicyModal(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200"
-            >
-              ยกเลิก
-            </button>
-            <button
-              onClick={handleAddPolicySubmit}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white"
-            >
-              บันทึกนโยบาย
-            </button>
-          </>
-        }
-      >
-        <form onSubmit={handleAddPolicySubmit} className="space-y-3 text-xs">
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">หัวข้อนโยบาย *</label>
-            <input
-              type="text"
-              required
-              value={policyTitle}
-              onChange={e => setPolicyTitle(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl"
-              placeholder="เช่น ระเบียบการแต่งกายและเวลาอบรมครูฝึก"
-            />
-          </div>
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">รายละเอียดนโยบาย *</label>
-            <textarea
-              required
-              rows={4}
-              value={policyContent}
-              onChange={e => setPolicyContent(e.target.value)}
-              className="w-full p-2.5 border border-slate-300 rounded-xl"
-              placeholder="ระบุข้อกำหนด เงื่อนไข และบทลงโทษหรือสวัสดิการ..."
-            />
-          </div>
-        </form>
-      </Modal>
+      {/* Modal: Add Policy (Super Admin Only) */}
+      {role === 'SUPER_ADMIN' && (
+        <Modal
+          isOpen={showAddPolicyModal}
+          onClose={() => setShowAddPolicyModal(false)}
+          title={`เพิ่มนโยบายใหม่: ${currentPolicyCompany.name}`}
+          subtitle="กำหนดระเบียบและข้อบังคับเฉพาะสำหรับสาขานี้"
+          size="md"
+          footer={
+            <>
+              <button
+                onClick={() => setShowAddPolicyModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200 cursor-pointer"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleAddPolicySubmit}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white cursor-pointer"
+              >
+                บันทึกนโยบาย
+              </button>
+            </>
+          }
+        >
+          <form onSubmit={handleAddPolicySubmit} className="space-y-3 text-xs">
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">หัวข้อนโยบาย *</label>
+              <input
+                type="text"
+                required
+                value={policyTitle}
+                onChange={e => setPolicyTitle(e.target.value)}
+                className="w-full p-2.5 border border-slate-300 rounded-xl"
+                placeholder="เช่น ระเบียบการแต่งกายและเวลาอบรมครูฝึก"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">รายละเอียดนโยบาย *</label>
+              <textarea
+                required
+                rows={4}
+                value={policyContent}
+                onChange={e => setPolicyContent(e.target.value)}
+                className="w-full p-2.5 border border-slate-300 rounded-xl"
+                placeholder="ระบุข้อกำหนด เงื่อนไข และบทลงโทษหรือสวัสดิการ..."
+              />
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

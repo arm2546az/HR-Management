@@ -428,19 +428,23 @@ export const HRManagementWorkspace: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner Header */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-[#022247] flex items-center gap-2">
-            <i className="fa-solid fa-users text-[#064a8b]"></i>
-            บริหารงานบุคคล (HR Management Workspace)
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            ศูนย์รวมการจัดการพนักงาน ติดตามสถานะทดลองงาน คำขอลาและการอนุมัติ และปฏิทินวันหยุดบริษัท
-          </p>
+      {/* Top Banner Header: Equalized Layout (Clean & Balanced on both Mobile & Desktop) */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex items-start sm:items-center gap-3">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-blue-50 text-[#064a8b] flex items-center justify-center text-lg sm:text-xl shrink-0 mt-0.5 sm:mt-0">
+            <i className="fa-solid fa-users"></i>
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg md:text-xl font-black text-[#022247] leading-tight">
+              บริหารงานบุคคล (HR Management Workspace)
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              ศูนย์รวมการจัดการพนักงาน
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto">
           {employees.length > 0 && (
             <button
               onClick={() => {
@@ -449,26 +453,26 @@ export const HRManagementWorkspace: React.FC = () => {
                   Alert.success('นำรายชื่อพนักงานออกสำเร็จ', 'ล้างข้อมูลรายชื่อพนักงานทั้งหมดออกจากระบบเรียบร้อยแล้ว');
                 }
               }}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all flex items-center gap-1.5 shrink-0"
+              className="flex-1 md:flex-initial px-3.5 py-2.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
               title="เอารายชื่อพนักงานทั้งหมดออก"
             >
               <i className="fa-solid fa-trash-can text-rose-500"></i>
-              เอารายชื่อพนักงานออก
+              <span className="truncate">เอารายชื่อพนักงานออก</span>
             </button>
           )}
 
           <button
             onClick={() => setShowAddEmployeeModal(true)}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-sm transition-all flex items-center gap-1.5 shrink-0"
+            className="flex-1 md:flex-initial px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#064a8b] hover:bg-[#022247] text-white shadow-sm transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
           >
             <i className="fa-solid fa-user-plus text-[#c3a138]"></i>
-            เพิ่มพนักงานแบบแมนนวล
+            <span className="truncate">เพิ่มพนักงานแบบแมนนวล</span>
           </button>
         </div>
       </div>
 
-      {/* 4 Workspace Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto text-xs">
+      {/* 4 Workspace Navigation Tabs: Responsive 2x2 Grid on Mobile & 4-Column on Desktop (No Long Horizontal Scroll) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
         {[
           { key: 'DIRECTORY', label: '1) หน้าพนักงาน', icon: 'fa-address-book', count: employees.length },
           { key: 'STATUS_TRACKING', label: '2) ติดตามสถานะพนักงาน', icon: 'fa-user-clock', count: probationList.length, badgeColor: 'bg-amber-500 text-white' },
@@ -478,16 +482,16 @@ export const HRManagementWorkspace: React.FC = () => {
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key as any)}
-            className={`px-4 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
+            className={`py-2.5 px-2 sm:px-3 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-xs cursor-pointer ${
               activeTab === tab.key
                 ? 'bg-[#064a8b] text-white shadow-xs'
-                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            <i className={`fa-solid ${tab.icon} text-xs`}></i>
-            <span>{tab.label}</span>
+            <i className={`fa-solid ${tab.icon} text-xs shrink-0`}></i>
+            <span className="truncate">{tab.label}</span>
             {Boolean(tab.count) && tab.count! > 0 && (
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${tab.badgeColor || 'bg-[#c3a138] text-slate-900'}`}>
+              <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black shrink-0 ${tab.badgeColor || (activeTab === tab.key ? 'bg-[#c3a138] text-slate-900' : 'bg-slate-200 text-slate-700')}`}>
                 {tab.count}
               </span>
             )}
