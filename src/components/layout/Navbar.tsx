@@ -2,15 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHR } from '../../context/HRContext';
 import { Role } from '../../types';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface NavbarProps {
   onToggleSidebar: () => void;
+  isSidebarOpen?: boolean;
   currentTab: string;
   onNavigate: (tab: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onToggleSidebar,
+  isSidebarOpen,
   onNavigate,
 }) => {
   const { currentUser, currentEmployee, role, logout } = useAuth();
@@ -63,39 +66,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs h-16 flex items-center">
       {/* Main Navbar */}
-      <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
-        {/* Left: Hamburger & Brand */}
-        <div className="flex items-center gap-3">
+      <div className="px-4 sm:px-6 w-full flex items-center justify-between gap-4">
+        {/* Left: Hamburger Toggle Button (Open/Close Sidebar) */}
+        <div className="flex items-center">
           <button
             onClick={onToggleSidebar}
-            className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none"
-            title="เปิด/ปิด เมนูด้านข้าง"
+            className="w-10 h-10 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 active:bg-slate-200 transition-colors focus:outline-none cursor-pointer flex items-center justify-center border border-slate-200/80 shadow-xs"
+            title={isSidebarOpen ? "คลิกเพื่อปิดแถบเมนู (Close Sidebar)" : "คลิกเพื่อเปิดแถบเมนู (Open Sidebar)"}
+            aria-label="Toggle Navigation Sidebar"
           >
-            <i className="fa-solid fa-bars text-lg"></i>
+            <i className="fa-solid fa-bars text-lg text-slate-700"></i>
           </button>
-
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#022247] to-[#064a8b] text-[#c3a138] flex items-center justify-center shadow-sm font-bold text-lg">
-              <i className="fa-solid fa-car-side"></i>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-[#022247] text-base sm:text-lg tracking-tight">VN Group</span>
-                <span className="hidden md:inline-block text-[11px] font-semibold bg-[#064a8b]/10 text-[#064a8b] px-2 py-0.5 rounded">
-                  HRMS
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 hidden sm:block leading-none">
-                โรงเรียนสอนขับรถวีเอ็น (กำแพงเพชร & ท่ามะเขือ)
-              </p>
-            </div>
-          </div>
         </div>
 
-        {/* Center: Branch Filter (for Admin/SuperAdmin) */}
-        {role !== 'EMPLOYEE' && (
+        {/* Center: Branch Filter */}
+        {(role === 'SUPER_ADMIN' || role === 'HR_MANAGER') ? (
           <div className="hidden lg:flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <span className="text-xs font-semibold text-slate-600 pl-2">
               <i className="fa-solid fa-building mr-1 text-[#064a8b]"></i> สาขา:
@@ -113,12 +100,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               ))}
             </select>
           </div>
+        ) : (
+          <div className="hidden sm:flex items-center gap-2 bg-blue-50/80 px-3 py-1 rounded-xl border border-blue-200/80 text-xs font-bold text-[#064a8b]">
+            <i className="fa-solid fa-location-dot text-[#c3a138]"></i>
+            <span>สาขา: {companies.find(c => c.id === currentUser?.assignedCompanyIds[0])?.name || companies[0]?.name}</span>
+          </div>
         )}
 
         {/* Right: Actions, Notifications & Profile */}
         <div className="flex items-center gap-2.5">
-          {/* Branch filter for small screens */}
-          {role !== 'EMPLOYEE' && (
+          {/* Branch filter for small screens (Only Super Admin & HR Manager) */}
+          {(role === 'SUPER_ADMIN' || role === 'HR_MANAGER') && (
             <div className="lg:hidden">
               <select
                 value={selectedCompanyId}
@@ -249,11 +241,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="relative" ref={userRef}>
             <button
               onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none"
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none cursor-pointer"
             >
-              <div className="w-8 h-8 rounded-lg bg-[#064a8b] text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                {currentEmployee?.firstName?.charAt(0) || 'U'}
-              </div>
+              <UserAvatar size="sm" allowUpload={false} />
               <div className="text-left hidden md:block">
                 <p className="text-xs font-bold text-slate-800 leading-tight">
                   {currentEmployee ? `${currentEmployee.firstName} ${currentEmployee.lastName}` : currentUser?.username}
@@ -269,8 +259,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {showUserDropdown && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden z-50">
-                <div className="p-4 bg-slate-50 border-b border-slate-200">
-                  <p className="text-xs text-slate-500">เข้าสู่ระบบในชื่อ</p>
+                <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-col items-center text-center">
+                  <UserAvatar size="lg" allowUpload={true} showBadge={true} className="mb-2" />
                   <p className="text-sm font-bold text-slate-800">
                     {currentEmployee ? `${currentEmployee.firstName} ${currentEmployee.lastName}` : currentUser?.username}
                   </p>

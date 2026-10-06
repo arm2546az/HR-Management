@@ -65,6 +65,7 @@ export interface User {
   employeeId: string;
   username: string;
   password?: string;
+  avatarUrl?: string | null;
   role: Role;
   isActive: boolean;
   assignedCompanyIds: string[]; // Companies user has access to

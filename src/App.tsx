@@ -18,8 +18,17 @@ const MainLayout: React.FC = () => {
   const { currentUser, role } = useAuth();
   const { selectedCompanyId, companies } = useHR();
 
-  // Sidebar open state (for mobile & toggle)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Sidebar open state: default to open on desktop screens, closed on mobile
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
+
+  const handleToggleSidebar = () => {
+    setIsSidebarOpen(prev => !prev);
+  };
 
   // Active Tab state based on user role
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -82,15 +91,19 @@ const MainLayout: React.FC = () => {
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
+        onToggle={handleToggleSidebar}
         activeTab={activeTab}
         onSelectTab={setActiveTab}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col lg:pl-72 transition-all duration-300">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${
+        isSidebarOpen ? 'lg:pl-72' : 'lg:pl-0'
+      }`}>
         {/* Top Navbar */}
         <Navbar
-          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onToggleSidebar={handleToggleSidebar}
+          isSidebarOpen={isSidebarOpen}
           currentTab={activeTab}
           onNavigate={setActiveTab}
         />

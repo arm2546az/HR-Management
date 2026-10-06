@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { VNGroupLogo } from '../common/VNGroupLogo';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [branchId, setBranchId] = useState<'c2' | 'c1'>('c2'); // c2 = ท่ามะเขือ, c1 = เมืองกำแพงเพชร
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,7 +20,7 @@ export const LoginPage: React.FC = () => {
     }
 
     setIsLoading(true);
-    const success = login(username, password);
+    const success = login(username, password, branchId);
     setIsLoading(false);
 
     if (!success) {
@@ -26,30 +28,33 @@ export const LoginPage: React.FC = () => {
     }
   };
 
+  const isBranchRole =
+    username.includes('หัวหน้าแผนก') ||
+    username.includes('พนักงาน') ||
+    username.toLowerCase().includes('depthead') ||
+    username.toLowerCase().includes('employee') ||
+    username.toLowerCase().includes('staff') ||
+    username === '';
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-200 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md space-y-6">
-        {/* Top Header & Brand */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#022247] border-2 border-[#c3a138] text-[#c3a138] text-2xl shadow-xl mb-1 font-black">
-            <i className="fa-solid fa-car-side"></i>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#022247] tracking-tight">
-            VN GROUP HRMS
-          </h1>
+      <div className="w-full max-w-md space-y-5">
+        {/* Top Header & Official VN Group Logo */}
+        <div className="text-center flex flex-col items-center justify-center space-y-2">
+          <VNGroupLogo size="lg" className="mb-1" />
           <p className="text-xs sm:text-sm font-medium text-slate-600">
             โรงเรียนสอนขับรถวีเอ็น (กำแพงเพชร & ท่ามะเขือ)
           </p>
         </div>
 
-        {/* Clean Center Login Card (No side panel) */}
-        <div className="bg-white rounded-3xl shadow-xl border border-slate-200/90 p-7 sm:p-9 space-y-6">
+        {/* Clean Center Login Card */}
+        <div className="bg-white rounded-3xl shadow-xl border border-slate-200/90 p-6 sm:p-8 space-y-5">
           <div>
             <h2 className="text-lg font-bold text-slate-800">
               เข้าสู่ระบบ (Sign In)
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              กรุณาระบุชื่อผู้ใช้งานและรหัสผ่านเพื่อเข้าสู่ระบบ
+            <p className="text-xs text-slate-500 mt-0.5">
+              กรุณาระบุชื่อผู้ใช้งานและรหัสผ่านเพื่อเข้าใช้งานระบบ
             </p>
           </div>
 
@@ -80,6 +85,46 @@ export const LoginPage: React.FC = () => {
                 />
               </div>
             </div>
+
+            {/* Branch Selector for Department Head & Employee */}
+            {isBranchRole && (
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1.5 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <label className="block font-bold text-slate-700 text-[11px]">
+                    สาขาประจำ (Branch) <span className="text-slate-400 font-normal">(สำหรับหัวหน้าแผนก / พนักงาน)</span>
+                  </label>
+                  <span className="text-[10px] text-[#064a8b] font-bold">
+                    {branchId === 'c2' ? 'สาขาท่ามะเขือ' : 'สาขาเมืองกำแพงเพชร'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setBranchId('c2')}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      branchId === 'c2'
+                        ? 'bg-[#064a8b] text-white border-[#064a8b] shadow-xs'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <i className="fa-solid fa-location-dot text-xs"></i>
+                    <span>สาขาท่ามะเขือ</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBranchId('c1')}
+                    className={`py-2 px-2 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      branchId === 'c1'
+                        ? 'bg-[#064a8b] text-white border-[#064a8b] shadow-xs'
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    <i className="fa-solid fa-location-dot text-xs"></i>
+                    <span>สาขาเมืองกำแพงเพชร</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block font-bold text-slate-700 mb-1.5">
@@ -113,7 +158,7 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Security & System Info Footer */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
             <span className="flex items-center gap-1.5">
               <i className="fa-solid fa-shield-halved text-emerald-500"></i>
               ระบบยืนยันตัวตนปลอดภัย

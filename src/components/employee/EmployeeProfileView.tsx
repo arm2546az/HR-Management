@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHR } from '../../context/HRContext';
 import { formatThaiDate, formatCurrency, getStatusBadge } from '../../utils/helpers';
+import { UserAvatar } from '../common/UserAvatar';
 
 export const EmployeeProfileView: React.FC = () => {
   const { currentEmployee } = useAuth();
@@ -31,9 +32,12 @@ export const EmployeeProfileView: React.FC = () => {
       {/* Header Banner */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#064a8b] text-white flex items-center justify-center font-black text-2xl shadow-md">
-            {currentEmployee.firstName.charAt(0)}
-          </div>
+          <UserAvatar
+            size="xl"
+            allowUpload={true}
+            showBadge={true}
+            className="shrink-0"
+          />
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-[#064a8b]">

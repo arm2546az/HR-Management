@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useHR } from '../../context/HRContext';
 import { Role } from '../../types';
+import { VNGroupLogo } from '../common/VNGroupLogo';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  onToggle?: () => void;
   activeTab: string;
   onSelectTab: (tab: string) => void;
 }
@@ -27,6 +30,7 @@ interface MenuSection {
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onClose,
+  onToggle,
   activeTab,
   onSelectTab,
 }) => {
@@ -48,7 +52,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // Branch name calculation
-  const currentBranchName = selectedCompanyId === 'ALL'
+  const currentBranchName = (role === 'DEPARTMENT_HEAD' || role === 'EMPLOYEE')
+    ? (companies.find(c => c.id === currentUser?.assignedCompanyIds[0])?.shortName || companies[0]?.shortName || 'สาขาประจำ')
+    : selectedCompanyId === 'ALL'
     ? 'ทุกสาขาในเครือ (VN Group)'
     : companies.find(c => c.id === selectedCompanyId)?.shortName || 'สาขาที่เลือก';
 
@@ -279,109 +285,107 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 w-72 bg-gradient-to-b from-[#01142b] via-[#021d3f] to-[#010e20] text-white flex flex-col transition-all duration-300 ease-in-out border-r border-[#083a6f]/60 shadow-2xl lg:translate-x-0 ${
+        className={`fixed top-0 bottom-0 left-0 z-40 w-72 bg-gradient-to-b from-[#01142b] via-[#021d3f] to-[#010e20] text-white flex flex-col transition-transform duration-300 ease-in-out border-r border-[#083a6f]/60 shadow-2xl ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* =========================================
-            1. BRAND HEADER & BRANCH SELECTOR
+            1. BRAND HEADER & HAMBURGER BUTTON (CENTERED LOGO & PARALLEL BUTTON)
            ========================================= */}
-        <div className="p-4 border-b border-[#083a6f]/60 relative bg-black/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {/* Luxury VN Emblem */}
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0a58ca] via-[#064a8b] to-[#022247] border-2 border-[#c3a138] text-[#c3a138] flex items-center justify-center font-black text-xl shadow-lg ring-2 ring-[#c3a138]/20 shrink-0">
-                <i className="fa-solid fa-car-side"></i>
-              </div>
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h1 className="font-black text-base text-white tracking-wider leading-none">
-                    VN GROUP
-                  </h1>
-                  <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-[#c3a138] text-slate-950 uppercase tracking-tighter">
-                    HRMS
-                  </span>
-                </div>
-                <p className="text-[11px] text-[#a4b3d3] leading-tight font-medium truncate mt-1">
-                  โรงเรียนสอนขับรถวีเอ็น
-                </p>
-              </div>
-            </div>
-
-            {/* Mobile Close Button */}
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors lg:hidden"
-              title="ปิดเมนู"
-            >
-              <i className="fa-solid fa-xmark text-lg"></i>
-            </button>
+        <div className="h-16 px-4 border-b border-[#083a6f]/60 relative bg-black/20 flex items-center justify-center">
+          {/* Official VN Group Brand Logo Centered */}
+          <div className="flex items-center justify-center">
+            <VNGroupLogo variant="white" size="sm" className="mx-auto" />
           </div>
 
-          {/* Branch Switcher Trigger Button */}
-          <div className="mt-3 relative">
-            <button
-              onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-              className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between text-[11px] text-[#cad7f5] transition-all"
-              title="คลิกเพื่อสลับสาขาที่ต้องการดูข้อมูล"
-            >
-              <div className="flex items-center gap-2 truncate">
-                <i className="fa-solid fa-location-dot text-[#c3a138] text-xs shrink-0"></i>
-                <span className="font-semibold truncate">{currentBranchName}</span>
-              </div>
-              <i className={`fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform ${showBranchDropdown ? 'rotate-180' : ''}`}></i>
-            </button>
+          {/* Hamburger Menu Button inside the top-right of Sidebar */}
+          <button
+            onClick={onToggle || onClose}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl text-slate-300 hover:text-white bg-white/5 hover:bg-white/15 active:bg-white/20 border border-white/10 transition-colors focus:outline-none flex items-center justify-center cursor-pointer shadow-xs"
+            title="คลิกเพื่อปิดแถบเมนู (Close Sidebar)"
+            aria-label="Close Sidebar"
+          >
+            <i className="fa-solid fa-bars text-lg text-white"></i>
+          </button>
+        </div>
 
-            {/* Branch Dropdown Popover */}
-            {showBranchDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#021d3f] border border-[#083a6f] rounded-xl shadow-2xl p-1 z-50 text-xs space-y-0.5">
-                <button
-                  onClick={() => {
-                    setSelectedCompanyId('ALL');
-                    setShowBranchDropdown(false);
-                  }}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-lg font-medium transition-colors flex items-center justify-between ${
-                    selectedCompanyId === 'ALL'
-                      ? 'bg-[#064a8b] text-white font-bold'
-                      : 'text-slate-200 hover:bg-white/10'
-                  }`}
-                >
-                  <span className="truncate">🏢 ทุกสาขาในเครือ</span>
-                  {selectedCompanyId === 'ALL' && <i className="fa-solid fa-check text-[10px] text-[#c3a138]"></i>}
-                </button>
+        {/* Branch Switcher Section */}
+        <div className="px-3 pt-3">
+          {(role === 'SUPER_ADMIN' || role === 'HR_MANAGER') ? (
+            <div className="relative">
+              <button
+                onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                className="w-full px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-between text-[11px] text-[#cad7f5] transition-all cursor-pointer"
+                title="คลิกเพื่อสลับสาขาที่ต้องการดูข้อมูล"
+              >
+                <div className="flex items-center gap-2 truncate">
+                  <i className="fa-solid fa-location-dot text-[#c3a138] text-xs shrink-0"></i>
+                  <span className="font-semibold truncate">{currentBranchName}</span>
+                </div>
+                <i className={`fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform ${showBranchDropdown ? 'rotate-180' : ''}`}></i>
+              </button>
 
-                {companies.map(c => (
+              {/* Branch Dropdown Popover */}
+              {showBranchDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-1.5 bg-[#021d3f] border border-[#083a6f] rounded-xl shadow-2xl p-1 z-50 text-xs space-y-0.5">
                   <button
-                    key={c.id}
                     onClick={() => {
-                      setSelectedCompanyId(c.id);
+                      setSelectedCompanyId('ALL');
                       setShowBranchDropdown(false);
                     }}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg font-medium transition-colors flex items-center justify-between ${
-                      selectedCompanyId === c.id
+                    className={`w-full text-left px-2.5 py-1.5 rounded-lg font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                      selectedCompanyId === 'ALL'
                         ? 'bg-[#064a8b] text-white font-bold'
                         : 'text-slate-200 hover:bg-white/10'
                     }`}
                   >
-                    <span className="truncate">📍 {c.shortName}</span>
-                    {selectedCompanyId === c.id && <i className="fa-solid fa-check text-[10px] text-[#c3a138]"></i>}
+                    <span className="truncate">🏢 ทุกสาขาในเครือ</span>
+                    {selectedCompanyId === 'ALL' && <i className="fa-solid fa-check text-[10px] text-[#c3a138]"></i>}
                   </button>
-                ))}
+
+                  {companies.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        setSelectedCompanyId(c.id);
+                        setShowBranchDropdown(false);
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                        selectedCompanyId === c.id
+                          ? 'bg-[#064a8b] text-white font-bold'
+                          : 'text-slate-200 hover:bg-white/10'
+                      }`}
+                    >
+                      <span className="truncate">📍 {c.shortName}</span>
+                      {selectedCompanyId === c.id && <i className="fa-solid fa-check text-[10px] text-[#c3a138]"></i>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="px-2.5 py-1.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between text-[11px] text-[#cad7f5]">
+              <div className="flex items-center gap-2 truncate">
+                <i className="fa-solid fa-location-dot text-[#c3a138] text-xs shrink-0"></i>
+                <span className="font-semibold truncate">{currentBranchName}</span>
               </div>
-            )}
-          </div>
+              <span className="text-[10px] text-emerald-400 font-bold px-1.5 py-0.5 rounded bg-emerald-950/60 border border-emerald-500/30">สาขาประจำ</span>
+            </div>
+          )}
         </div>
 
         {/* =========================================
-            2. USER PROFILE
+            2. USER PROFILE & AVATAR
            ========================================= */}
         <div className="px-3 pt-3">
           <div className="p-3 rounded-2xl bg-white/[0.06] border border-white/10 backdrop-blur-xs relative group">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-xl ${currentRoleMeta.avatarBg} border flex items-center justify-center shadow-inner shrink-0 ${currentRoleMeta.ringColor}`}>
-                <i className={`fa-solid ${currentRoleMeta.icon} text-base ${currentRoleMeta.iconColor}`}></i>
-              </div>
+              <UserAvatar
+                size="md"
+                allowUpload={true}
+                showBadge={true}
+                className="shrink-0"
+              />
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-1">

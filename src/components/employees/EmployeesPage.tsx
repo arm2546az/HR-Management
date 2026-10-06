@@ -5,6 +5,7 @@ import { DataTable, Column } from '../common/DataTable';
 import { Modal } from '../common/Modal';
 import { Employee, EmploymentStatus } from '../../types';
 import { formatThaiDate, formatCurrency, getStatusBadge, Alert } from '../../utils/helpers';
+import { UserAvatar } from '../common/UserAvatar';
 
 export const EmployeesPage: React.FC = () => {
   const { role } = useAuth();
@@ -229,9 +230,13 @@ export const EmployeesPage: React.FC = () => {
       header: 'ชื่อ - นามสกุล',
       render: (emp) => (
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
-            {emp.firstName.charAt(0)}
-          </div>
+          <UserAvatar
+            userId={emp.id}
+            avatarUrl={emp.avatarUrl}
+            size="sm"
+            alt={emp.firstName}
+            className="shrink-0"
+          />
           <div>
             <p className="font-bold text-slate-800 text-xs leading-tight">
               {emp.firstName} {emp.lastName} {emp.nickname ? `(${emp.nickname})` : ''}
@@ -317,9 +322,13 @@ export const EmployeesPage: React.FC = () => {
           {/* Card Top: Avatar, Name, Code & Status */}
           <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3 mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#022247] to-[#064a8b] text-[#c3a138] font-black text-lg flex items-center justify-center shadow-xs shrink-0 group-hover:scale-105 transition-transform">
-                {emp.firstName.charAt(0)}
-              </div>
+              <UserAvatar
+                userId={emp.id}
+                avatarUrl={emp.avatarUrl}
+                size="md"
+                alt={emp.firstName}
+                className="shrink-0 group-hover:scale-105 transition-transform"
+              />
               <div>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <h4 className="font-black text-slate-800 text-sm leading-tight">

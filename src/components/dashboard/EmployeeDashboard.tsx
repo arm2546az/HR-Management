@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useHR } from '../../context/HRContext';
 import { formatThaiDate, getStatusBadge, Alert } from '../../utils/helpers';
 import { Announcements } from '../employee/Announcements';
+import { UserAvatar } from '../common/UserAvatar';
 
 interface EmployeeDashboardProps {
   onNavigate: (tab: string) => void;
@@ -102,9 +103,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = ({ onNavigate
       <div className="bg-gradient-to-r from-[#022247] via-[#064a8b] to-[#022247] rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-[#c3a138] text-slate-900 font-black text-2xl flex items-center justify-center shadow-md shrink-0">
-              {currentEmployee?.firstName?.charAt(0) || 'พ'}
-            </div>
+            <UserAvatar
+              size="xl"
+              allowUpload={true}
+              showBadge={true}
+              className="shrink-0"
+            />
             <div>
               <div className="flex items-center gap-2">
                 {currentEmployee?.employeeCode && (

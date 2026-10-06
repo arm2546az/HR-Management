@@ -107,7 +107,28 @@ export const HRProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const { currentEmployee, currentUser } = useAuth();
 
   // Selected company filter
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('ALL');
+  const [selectedCompanyIdState, setSelectedCompanyIdState] = useState<string>('ALL');
+
+  // Enforce branch scoping for Department Head and Employee
+  useEffect(() => {
+    if (currentUser?.role === 'DEPARTMENT_HEAD' || currentUser?.role === 'EMPLOYEE') {
+      const assignedBranch = currentUser.assignedCompanyIds[0] || 'c1';
+      setSelectedCompanyIdState(assignedBranch);
+    }
+  }, [currentUser]);
+
+  const selectedCompanyId = (currentUser?.role === 'DEPARTMENT_HEAD' || currentUser?.role === 'EMPLOYEE')
+    ? (currentUser.assignedCompanyIds[0] || 'c1')
+    : selectedCompanyIdState;
+
+  const setSelectedCompanyId = useCallback((companyId: string) => {
+    if (currentUser?.role === 'DEPARTMENT_HEAD' || currentUser?.role === 'EMPLOYEE') {
+      const assignedBranch = currentUser.assignedCompanyIds[0] || 'c1';
+      setSelectedCompanyIdState(assignedBranch);
+      return;
+    }
+    setSelectedCompanyIdState(companyId);
+  }, [currentUser]);
 
   // Persistence helpers
   const VERSION_KEY = 'vn_empty_employees_v7_clean';
